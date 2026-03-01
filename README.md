@@ -179,6 +179,20 @@ terraform apply
 ```
 
 ---
+---
+
+## 🚫 Sensitive Files Protection
+
+To prevent accidental exposure, the following files and directories are excluded using `.gitignore`:
+
+```id="gitignore"
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+```
+
+---
 
 ## 🌍 Access Jenkins
 
@@ -188,22 +202,109 @@ http://<PUBLIC_IP>:8080
 
 ---
 
-## 💡 Best Practices Applied
+## ⚠️ Production Recommendation
 
-* ✔️ Fully modular Terraform architecture
-* ✔️ Separation of concerns
-* ✔️ Use of `variables.tf` per module
-* ✔️ Reusable and scalable design
-* ✔️ `user_data` instead of provisioners
-* ✔️ Automated infrastructure provisioning
+For production environments:
+
+* Generate SSH keys **outside Terraform**
+* Store secrets in secure services (e.g., AWS Secrets Manager)
+* Enable encryption for remote state storage
+
+---
+## 🔐 Security Considerations
+
+The SSH private key is stored in the Terraform state file.
+This is acceptable for learning or lab environments, but **must be handled carefully**.
+
+⚠️ **Important:**
+The Terraform state file (`.tfstate`) may contain sensitive data such as:
+
+* Private SSH keys
+* Infrastructure details
+* Credentials or secrets (depending on configuration)
+
+👉 Therefore, it should **NEVER be exposed publicly** (e.g., committed to GitHub).
+
+## 🛡️ Best Practices
+
+* Never commit `.tfstate` files to a public repository
+* Use a **remote backend** (e.g., S3 with encryption + DynamoDB locking)
+* Restrict access to Terraform state files
+* Avoid storing sensitive data in Terraform when possible
+
+## ☁️ Remote Backend Best Practices
+
+For better security and collaboration, Terraform state files should be stored in a **remote backend**, such as an AWS S3 bucket.
+
+### 🔐 Why use a remote backend?
+
+Storing the `.tfstate` file locally is not recommended in production because:
+
+* It may expose sensitive information
+* It is not shared across team members
+* It can lead to inconsistent infrastructure states
 
 ---
 
-## ⚠️ Notes
+### 🚀 Advantages of Using S3 Backend
 
-* SSH private key is stored in Terraform state (acceptable for lab environments)
-* Docker group change may require session refresh in real-world usage
+Using an S3 remote backend provides:
 
+* 🔒 **Secure storage** (with encryption enabled)
+* 👥 **Team collaboration** (shared state)
+* 🔄 **State consistency** across environments
+* 🛑 **Prevention of duplicate resource deployment**
+* 📜 **State versioning** (track changes over time)
+
+---
+
+## ⚠️ Preventing Infrastructure Issues
+
+In team environments, using a remote backend helps to:
+
+* Avoid **duplicate deployments** of the same resources
+* Prevent **state conflicts** between team members
+* Ensure that everyone works with the **same infrastructure state**
+
+---
+
+## 🔄 State Locking (Recommended)
+
+To avoid concurrent modifications, it is recommended to use:
+
+* **AWS S3** → for storing the state
+* **AWS DynamoDB** → for state locking
+
+This prevents multiple users from applying changes at the same time.
+
+---
+
+## 🛡️ Production Recommendations
+
+For production environments:
+
+* Use **S3 backend with encryption enabled**
+* Enable **bucket versioning** to track state changes
+* Use **DynamoDB for state locking**
+* Restrict access using IAM policies
+
+---
+
+## 💡 Example (S3 Backend Configuration)
+
+```hcl id="s3backend"
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state-bucket"
+    key            = "jenkins-project/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-lock-table"
+  }
+}
+```
+
+---
 
 
 ## 👨‍💻 Author
