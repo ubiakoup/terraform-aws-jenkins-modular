@@ -208,7 +208,8 @@ http://<PUBLIC_IP>:8080
 
 ## 👨‍💻 Author
 
-Ulrich kouatang 
+Ulrich kouatang
+
 IoT cloud engineer|industrial Devops engineer
 
 ---
